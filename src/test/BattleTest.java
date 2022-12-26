@@ -1,8 +1,8 @@
 package test;
 
-import data.Battle;
-import data.Card;
-import data.User;
+import model.Battle;
+import model.Card;
+import model.User;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

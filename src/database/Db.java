@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class DbConnection {
+public class Db {
 
     public Connection connectToDb(String dbname, String user, String pass){
         Connection conn=null;
@@ -28,15 +28,19 @@ public class DbConnection {
 
         return conn;
     }
-    public void insertTest(Connection conn, String username, String password) {
+    public String createUser(Connection conn, String username, String password){
         Statement statement;
+        String result;
         try {
-            String query = "insert into usertest (username, password) values ('"+username+"', '"+password+"');";
+            String query = "insert into users (username, password) values ('"+username+"', '"+password+"');";
             statement=conn.createStatement();
             statement.executeUpdate(query);
-            System.out.println("Inserted");
+            result="The new Username: "+username+" was successfully created.";
+            System.out.println(result);
         } catch (Exception e) {
             e.printStackTrace();
+            result=e.toString();
         }
+        return result;
     }
 }

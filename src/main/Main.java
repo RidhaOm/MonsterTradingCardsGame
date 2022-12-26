@@ -1,18 +1,27 @@
 package main;
 
-import data.Battle;
-import data.User;
-import data.Card;
-import database.DbConnection;
+import Server.Server;
+import Server.HttpServer;
 
-import java.sql.Connection;
+import java.io.IOException;
 
 public class Main {
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        Server server = new Server(10001);
+        //HttpServer server1 = new HttpServer();
+        System.out.println("Server started...");
+        server.start();
+    }
 
-        //DbConnection db = new DbConnection();
+
+}
+
+
+
+/*
+//DbConnection db = new DbConnection();
         //Connection conn=db.connectToDb("postgres", "postgres", "root");
         //db.insertTest(conn, "myUser", "myPass");
 
@@ -29,7 +38,7 @@ public class Main {
         //Start the Battle:
         Battle battle= new Battle(user1, user2);
         battle.startBattle();
-
+*/
 
 
         /*
@@ -41,7 +50,3 @@ public class Main {
          */
 
 
-    }
-
-
-}

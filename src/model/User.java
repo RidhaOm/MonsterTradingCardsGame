@@ -1,5 +1,4 @@
-package data;
-import java.io.*;
+package model;
 import java.util.*;
 
 public class User {
