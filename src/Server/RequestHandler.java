@@ -29,7 +29,7 @@ public class RequestHandler implements  Runnable{
             String content=HandleRequest(request);
             printWriter.write(
                     //new Response(HttpStatus.OK, ContentType.PLAIN_TEXT, "Echo---" + request.getBody()).get() );
-                    new Response(HttpStatus.OK, ContentType.PLAIN_TEXT, "Echo---" +content).get() );
+                    new Response(HttpStatus.OK, ContentType.PLAIN_TEXT, "Response: " +content).get() );
 
         } catch (IOException exception)
         {
@@ -59,10 +59,13 @@ public class RequestHandler implements  Runnable{
             content= HandleCreateUser(request);
         }
         else if( (path.equals("/sessions")) && method==Method.POST ){
-            content= "Login Users";
+            content= HandleLoginUser(request);
+        }
+        else if( (path.equals("/transactions/packages")) && method==Method.POST ){
+            content= HandleAcquirePackage(request);
         }
         else if( (path.equals("/packages")) && method==Method.POST ){
-            content= "create packages (done by \"admin\") OR acquire packages";
+            content= HandleCreatePackage(request);
         }
         else if( (path.equals("/cards")) && method==Method.GET ){
             content= "show all acquired cards";
@@ -134,5 +137,68 @@ public class RequestHandler implements  Runnable{
         content= db.createUser(conn,username,password);
         return content;
 
+    }
+
+    public String HandleLoginUser(Request request){
+        String body=request.getBody();
+        String[] keyValuePairs = body.split(",");
+        String username = null;
+        String password = null;
+        String content;
+
+        for (String keyValuePair : keyValuePairs) {
+            String[] parts = keyValuePair.split(":");
+            String key = parts[0].trim();
+            String value = parts[1].trim();
+            //The first Key begin with { so it have to be deleted:
+            if(key.charAt(0)=='{') {
+                key=key.substring(1);
+            }
+            //The last value end with } so it have to be deleted:
+            if(value.charAt(value.length() - 1)=='}') {
+                value=value.substring(0,value.length()-1);
+            }
+            value=value.substring(1,value.length()-1);// to remove the " at the begin and the end
+            System.out.println("Key: "+key+" Value: "+value);
+
+            if (key.equals("\"Username\"")) {
+                username = value;
+            } else if (key.equals("\"Password\"")) {
+                password = value;
+            }
+        }
+        //Add Username and Password to the Database:
+        Db db = new Db();
+        Connection conn=db.connectToDb("postgres", "postgres", "");
+        content= db.loginUser(conn,username,password);
+        return content;
+
+    }
+    public String HandleCreatePackage(Request request){
+        String content;
+        String authHeader = request.getHeaderMap().get("Authorization");
+        String[] authParts = authHeader.split("-");
+        String[] usernameParts = authParts[0].split(" ");
+        String username = usernameParts[1];
+        if(username.equals("admin")){
+            Db db = new Db();
+            Connection conn=db.connectToDb("postgres", "postgres", "");
+
+            content=request.getBody();
+        }
+        else{
+            content="ERROR: " + username + " is not allowed to create a package.";
+        }
+
+
+        return content;
+    }
+    public String HandleAcquirePackage(Request request){
+        String authHeader = request.getHeaderMap().get("Authorization");
+        String[] authParts = authHeader.split("-");
+        String[] usernameParts = authParts[0].split(" ");
+        String username = usernameParts[1];
+        //return "create packages (done by \"admin\")";
+        return username;
     }
 }
