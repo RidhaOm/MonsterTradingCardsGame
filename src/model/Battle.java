@@ -91,8 +91,8 @@ public class Battle {
             return card2;
         }
         else {
-            int calculatedDamage1;
-            int calculatedDamage2;
+            double calculatedDamage1;
+            double calculatedDamage2;
             //effective
             if ( (card1.getElementType() =="Water")&&(card2.getElementType() =="Fire") ||
                     (card1.getElementType() =="Fire")&&(card2.getElementType() =="Normal")||

@@ -2,6 +2,7 @@ package Server;
 
 
 import database.Db;
+import model.Card;
 
 import java.io.*;
 import java.net.Socket;
@@ -175,7 +176,7 @@ public class RequestHandler implements  Runnable{
 
     }
     public String HandleCreatePackage(Request request){
-        String content;
+        String content="create";
         String authHeader = request.getHeaderMap().get("Authorization");
         String[] authParts = authHeader.split("-");
         String[] usernameParts = authParts[0].split(" ");
@@ -183,8 +184,63 @@ public class RequestHandler implements  Runnable{
         if(username.equals("admin")){
             Db db = new Db();
             Connection conn=db.connectToDb("postgres", "postgres", "");
+            Card[] cards = new Card[5];
+            String body=request.getBody();
 
-            content=request.getBody();
+            String[] splitBody = body.split("\\{");
+            System.out.println("------------- Length; "+splitBody.length);
+            for (String s : splitBody) {
+
+                String id, name, cardType, elementType;
+                double damage;
+                if (s.length()>1){
+                    id = s.substring(s.indexOf("\"Id\":\"") + 6, s.indexOf("\","));
+                    s=s.substring(s.indexOf("\",")+1);
+                    String element_name = s.substring(s.indexOf("\"Name\":\"")+8 , s.indexOf("\","));
+                    if ( (element_name.length()>5)&&(element_name.substring(0,5).equals("Water")) ){
+                        elementType="Water";
+                        if(element_name.substring(5).equals("Spell")){
+                            cardType="Spell";
+                            name="Spell";
+                        }
+                        else {
+                            cardType="Monster";
+                            name=element_name.substring(5);
+                        }
+                    }
+                    else if ( (element_name.length()>4)&&(element_name.substring(0,4).equals("Fire")) ){
+                        elementType="Fire";
+                        if(element_name.substring(4).equals("Spell")){
+                            cardType="Spell";
+                            name="Spell";
+                        }
+                        else {
+                            cardType="Monster";
+                            name=element_name.substring(4);
+                        }
+                    }
+                    else {
+                        elementType="Normal";
+                        if(element_name.equals("Spell")){
+                            cardType="Spell";
+                            name="Spell";
+                        }
+                        else {
+                            cardType="Monster";
+                            name=element_name;
+                        }
+                    }
+                    s=s.substring(s.indexOf("\",")+1);
+
+                    String damageString = s.substring(s.indexOf("\"Damage\": ")+10 , s.indexOf("}"));
+                    damage = Double.parseDouble(damageString);
+                    Card card=new Card(id, cardType, elementType, name, damage);
+                    db.createCard(conn, card);
+
+                }
+
+            }
+            content= "db.createCard()";
         }
         else{
             content="ERROR: " + username + " is not allowed to create a package.";

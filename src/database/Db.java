@@ -1,5 +1,7 @@
 package database;
 
+import model.Card;
+
 import java.sql.*;
 
 public class Db {
@@ -66,20 +68,36 @@ public class Db {
         return result;
     }
 
-    public String createPackage(Connection conn, String username, String password) {
+    public String createCard(Connection conn, Card card){
         String result;
+        try {
+            String query = "insert into cards (id, name, damage, element_type, card_type) values (?, ?, ?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, card.getId());
+            stmt.setString(2, card.getName());
+            stmt.setDouble(3, card.getDamage());
+            stmt.setString(4, card.getElementType());
+            stmt.setString(5, card.getCardType());
+
+            stmt.executeUpdate();
+            result="The new Car with the id: "+card.getId()+"  was created successfully.";
+            System.out.println(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            result=e.getMessage();
+        }
+        return result;
+    }
+
+    public void createPackage(Connection conn, String username, String password) {
         try {
             String query = "insert into packages (username, password) values (?, ?)";
             PreparedStatement stmt = conn.prepareStatement(query);
             stmt.setString(1, username);
             stmt.setString(2, password);
             stmt.executeUpdate();
-            result = "The new Username: " + username + " was created successfully.";
-            System.out.println(result);
         } catch (Exception e) {
             e.printStackTrace();
-            result = e.getMessage();
         }
-        return result;
     }
 }
