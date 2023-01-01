@@ -7,6 +7,7 @@ import model.Card;
 import java.io.*;
 import java.net.Socket;
 import java.sql.Connection;
+import java.util.Vector;
 
 public class RequestHandler implements  Runnable{
 
@@ -57,25 +58,25 @@ public class RequestHandler implements  Runnable{
         Method method=request.getMethod();
         String path=request.getPathname();
         if( (path.equals("/users")) && method==Method.POST ){
-            content= HandleCreateUser(request);
+            content= handleCreateUser(request);
         }
         else if( (path.equals("/sessions")) && method==Method.POST ){
-            content= HandleLoginUser(request);
+            content= handleLoginUser(request);
         }
         else if( (path.equals("/transactions/packages")) && method==Method.POST ){
-            content= HandleAcquirePackage(request);
+            content= handleAcquirePackage(request);
         }
         else if( (path.equals("/packages")) && method==Method.POST ){
-            content= HandleCreatePackage(request);
+            content= handleCreatePackage(request);
         }
         else if( (path.equals("/cards")) && method==Method.GET ){
-            content= "show all acquired cards";
+            content= handleShowStack(request);
         }
         else if( (path.equals("/deck")) && method==Method.GET ){
-            content= "show deck";
+            content= handleShowDeck(request);
         }
         else if( (path.equals("/deck")) && method==Method.PUT ){
-            content= "configure deck";
+            content= configureDeck(request);
         }
         else if( (path.equals("/users")) && method==Method.GET ){
             content= "edit user data(Show)";
@@ -104,7 +105,7 @@ public class RequestHandler implements  Runnable{
 
         return content;
     }
-    public String HandleCreateUser(Request request){
+    public String handleCreateUser(Request request){
         String body=request.getBody();
         String[] keyValuePairs = body.split(",");
         String username = null;
@@ -124,7 +125,7 @@ public class RequestHandler implements  Runnable{
                 value=value.substring(0,value.length()-1);
             }
             value=value.substring(1,value.length()-1);// to remove the " at the begin and the end
-            System.out.println("Key: "+key+" Value: "+value);
+            //System.out.println("Key: "+key+" Value: "+value);
 
             if (key.equals("\"Username\"")) {
                 username = value;
@@ -139,8 +140,7 @@ public class RequestHandler implements  Runnable{
         return content;
 
     }
-
-    public String HandleLoginUser(Request request){
+    public String handleLoginUser(Request request){
         String body=request.getBody();
         String[] keyValuePairs = body.split(",");
         String username = null;
@@ -175,8 +175,8 @@ public class RequestHandler implements  Runnable{
         return content;
 
     }
-    public String HandleCreatePackage(Request request){
-        String content="create";
+    public String handleCreatePackage(Request request){
+        String content;
         String authHeader = request.getHeaderMap().get("Authorization");
         String[] authParts = authHeader.split("-");
         String[] usernameParts = authParts[0].split(" ");
@@ -186,75 +186,113 @@ public class RequestHandler implements  Runnable{
             Connection conn=db.connectToDb("postgres", "postgres", "");
             Card[] cards = new Card[5];
             String body=request.getBody();
-
+            // Split the body into cards:
             String[] splitBody = body.split("\\{");
-            System.out.println("------------- Length; "+splitBody.length);
-            for (String s : splitBody) {
-
+            for (int i=0;i<5; i++) {
+                String s=splitBody[i+1];// because first string is just the character [
                 String id, name, cardType, elementType;
                 double damage;
-                if (s.length()>1){
-                    id = s.substring(s.indexOf("\"Id\":\"") + 6, s.indexOf("\","));
-                    s=s.substring(s.indexOf("\",")+1);
-                    String element_name = s.substring(s.indexOf("\"Name\":\"")+8 , s.indexOf("\","));
-                    if ( (element_name.length()>5)&&(element_name.substring(0,5).equals("Water")) ){
-                        elementType="Water";
-                        if(element_name.substring(5).equals("Spell")){
-                            cardType="Spell";
-                            name="Spell";
-                        }
-                        else {
-                            cardType="Monster";
-                            name=element_name.substring(5);
-                        }
-                    }
-                    else if ( (element_name.length()>4)&&(element_name.substring(0,4).equals("Fire")) ){
-                        elementType="Fire";
-                        if(element_name.substring(4).equals("Spell")){
-                            cardType="Spell";
-                            name="Spell";
-                        }
-                        else {
-                            cardType="Monster";
-                            name=element_name.substring(4);
-                        }
+                id = s.substring(s.indexOf("\"Id\":\"") + 6, s.indexOf("\","));
+                //remove the first type from the string
+                s=s.substring(s.indexOf("\",")+1);
+                String element_name = s.substring(s.indexOf("\"Name\":\"")+8 , s.indexOf("\","));
+                if ( (element_name.length()>5)&&(element_name.substring(0,5).equals("Water")) ){
+                    elementType="Water";
+                    if(element_name.substring(5).equals("Spell")){
+                        cardType="Spell";
+                        name="Spell";
                     }
                     else {
-                        elementType="Normal";
-                        if(element_name.equals("Spell")){
-                            cardType="Spell";
-                            name="Spell";
-                        }
-                        else {
-                            cardType="Monster";
-                            name=element_name;
-                        }
+                        cardType="Monster";
+                        name=element_name.substring(5);
                     }
-                    s=s.substring(s.indexOf("\",")+1);
-
-                    String damageString = s.substring(s.indexOf("\"Damage\": ")+10 , s.indexOf("}"));
-                    damage = Double.parseDouble(damageString);
-                    Card card=new Card(id, cardType, elementType, name, damage);
-                    db.createCard(conn, card);
-
                 }
-
+                else if ( (element_name.length()>4)&&(element_name.substring(0,4).equals("Fire")) ){
+                    elementType="Fire";
+                    if(element_name.substring(4).equals("Spell")){
+                        cardType="Spell";
+                        name="Spell";
+                    }
+                    else {
+                        cardType="Monster";
+                        name=element_name.substring(4);
+                    }
+                }
+                else {
+                    elementType="Normal";
+                    if(element_name.equals("Spell")){
+                        cardType="Spell";
+                        name="Spell";
+                    }
+                    else {
+                        cardType="Monster";
+                        name=element_name;
+                    }
+                }
+                s=s.substring(s.indexOf("\",")+1);
+                String damageString = s.substring(s.indexOf("\"Damage\": ")+10 , s.indexOf("}"));
+                damage = Double.parseDouble(damageString);
+                Card card=new Card(id, cardType, elementType, name, damage);
+                db.createCard(conn, card);
+                cards[i]=card;
             }
-            content= "db.createCard()";
+            content=db.createPackage(conn,cards);
         }
         else{
             content="ERROR: " + username + " is not allowed to create a package.";
         }
-
-
         return content;
     }
-    public String HandleAcquirePackage(Request request){
+    public String handleAcquirePackage(Request request){
         String authHeader = request.getHeaderMap().get("Authorization");
         String[] authParts = authHeader.split("-");
         String[] usernameParts = authParts[0].split(" ");
         String username = usernameParts[1];
-        //return "create packages (done by \"admin\")";
-        return username;
+        Db db = new Db();
+        Connection conn=db.connectToDb("postgres", "postgres", "");
+        String content=db.acquirePackage(conn, username);
+        return content;
+    }
+    public String handleShowStack(Request request){
+        String authHeader = request.getHeaderMap().get("Authorization");
+        String[] authParts = authHeader.split("-");
+        String[] usernameParts = authParts[0].split(" ");
+        String username = usernameParts[1];
+        Db db = new Db();
+        Connection conn=db.connectToDb("postgres", "postgres", "");
+        String content=db.showStack(conn, username);
+        return content;
+    }
+    public String handleShowDeck(Request request){
+        String authHeader = request.getHeaderMap().get("Authorization");
+        String[] authParts = authHeader.split("-");
+        String[] usernameParts = authParts[0].split(" ");
+        String username = usernameParts[1];
+        Db db = new Db();
+        Connection conn=db.connectToDb("postgres", "postgres", "");
+        String content=db.showDeck(conn, username);
+        return content;
+    }
+    public String configureDeck(Request request){
+        String body = request.getBody();
+        // Remove the leading and trailing brackets
+        body = body.substring(1, body.length() - 1);
+        // Split the string by the comma and space characters
+        String[] IDs = body.split(", ");
+        Vector<String> cardsId = new Vector<String>(4);
+        for (String id:IDs){
+            // Remove the leading and trailing "
+            String cardId = id.substring(1, id.length() - 1);
+            cardsId.add(cardId);
+        }
+        // Get the username:
+        String authHeader = request.getHeaderMap().get("Authorization");
+        String[] authParts = authHeader.split("-");
+        String[] usernameParts = authParts[0].split(" ");
+        String username = usernameParts[1];
+        Db db = new Db();
+        Connection conn=db.connectToDb("postgres", "postgres", "");
+        String content=db.setDeck(conn, username, cardsId);
+        return content;
     }
 }
