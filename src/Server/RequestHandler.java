@@ -78,11 +78,11 @@ public class RequestHandler implements  Runnable{
         else if( (path.equals("/deck")) && method==Method.PUT ){
             content= configureDeck(request);
         }
-        else if( (path.equals("/users")) && method==Method.GET ){
-            content= "edit user data(Show)";
+        else if( (path.startsWith("/users/")) && method==Method.GET ){
+            content= showUserData(request);
         }
-        else if( (path.equals("/users")) && method==Method.PUT ){
-            content= "edit user data";
+        else if( (path.startsWith("/users/")) && method==Method.PUT ){
+            content= editUserData(request);
         }
         else if( (path.equals("/stats")) && method==Method.GET ){
             content= "stats";
@@ -104,6 +104,14 @@ public class RequestHandler implements  Runnable{
         }
 
         return content;
+    }
+
+    public String getUserName(Request request){
+        String authHeader = request.getHeaderMap().get("Authorization");
+        String[] authParts = authHeader.split("-");
+        String[] usernameParts = authParts[0].split(" ");
+        String username = usernameParts[1];
+        return username;
     }
     public String handleCreateUser(Request request){
         String body=request.getBody();
@@ -160,7 +168,6 @@ public class RequestHandler implements  Runnable{
                 value=value.substring(0,value.length()-1);
             }
             value=value.substring(1,value.length()-1);// to remove the " at the begin and the end
-            System.out.println("Key: "+key+" Value: "+value);
 
             if (key.equals("\"Username\"")) {
                 username = value;
@@ -177,10 +184,7 @@ public class RequestHandler implements  Runnable{
     }
     public String handleCreatePackage(Request request){
         String content;
-        String authHeader = request.getHeaderMap().get("Authorization");
-        String[] authParts = authHeader.split("-");
-        String[] usernameParts = authParts[0].split(" ");
-        String username = usernameParts[1];
+        String username = getUserName(request);
         if(username.equals("admin")){
             Db db = new Db();
             Connection conn=db.connectToDb("postgres", "postgres", "");
@@ -244,30 +248,21 @@ public class RequestHandler implements  Runnable{
         return content;
     }
     public String handleAcquirePackage(Request request){
-        String authHeader = request.getHeaderMap().get("Authorization");
-        String[] authParts = authHeader.split("-");
-        String[] usernameParts = authParts[0].split(" ");
-        String username = usernameParts[1];
+        String username = getUserName(request);
         Db db = new Db();
         Connection conn=db.connectToDb("postgres", "postgres", "");
         String content=db.acquirePackage(conn, username);
         return content;
     }
     public String handleShowStack(Request request){
-        String authHeader = request.getHeaderMap().get("Authorization");
-        String[] authParts = authHeader.split("-");
-        String[] usernameParts = authParts[0].split(" ");
-        String username = usernameParts[1];
+        String username = getUserName(request);
         Db db = new Db();
         Connection conn=db.connectToDb("postgres", "postgres", "");
         String content=db.showStack(conn, username);
         return content;
     }
     public String handleShowDeck(Request request){
-        String authHeader = request.getHeaderMap().get("Authorization");
-        String[] authParts = authHeader.split("-");
-        String[] usernameParts = authParts[0].split(" ");
-        String username = usernameParts[1];
+        String username = getUserName(request);
         Db db = new Db();
         Connection conn=db.connectToDb("postgres", "postgres", "");
         String content=db.showDeck(conn, username);
@@ -286,13 +281,95 @@ public class RequestHandler implements  Runnable{
             cardsId.add(cardId);
         }
         // Get the username:
-        String authHeader = request.getHeaderMap().get("Authorization");
-        String[] authParts = authHeader.split("-");
-        String[] usernameParts = authParts[0].split(" ");
-        String username = usernameParts[1];
+        String username = getUserName(request);
         Db db = new Db();
         Connection conn=db.connectToDb("postgres", "postgres", "");
         String content=db.setDeck(conn, username, cardsId);
         return content;
     }
+    public String showUserData(Request request) {
+        String username = getUserName(request);
+        String usernamePath = request.getPathname().substring("/users/".length());
+        String content;
+        if (username.equals(usernamePath)) {
+            Db db = new Db();
+            Connection conn=db.connectToDb("postgres", "postgres", "");
+            content=db.showUserData(conn, username);
+        }
+        else {
+            content = "ERROR: the username in the path : "+usernamePath+" does not match with the username in the header: "+username;
+        }
+        return  content;
+    }
+    public String editUserData(Request request) {
+        String username = getUserName(request);
+        String usernamePath = request.getPathname().substring("/users/".length());
+        String content;
+        if (username.equals(usernamePath)) {
+            String body = request.getBody();
+            // Get the start index of the name
+            int nameStartIndex = body.indexOf("\"Name\": \"") + "\"Name\": \"".length();
+            // Delete first part from the body so that it begins from the name
+            body=body.substring(nameStartIndex);
+            // Get the end index of the name
+            int nameEndIndex = body.indexOf("\"");
+            // Extract the name from the body
+            String name = body.substring(0, nameEndIndex);
+
+            // The same logic with bio
+            int bioStartIndex = body.indexOf("\"Bio\": \"") + "\"Bio\": \"".length();
+            body=body.substring(bioStartIndex);
+            int bioEndIndex = body.indexOf("\"");
+            String bio = body.substring(0, bioEndIndex);
+
+            // The same logic with bio image
+            int imageStartIndex = body.indexOf("\"Image\": \"") + "\"Image\": \"".length();
+            body=body.substring(imageStartIndex);
+            int imageEndIndex = body.indexOf("\"");
+            String image = body.substring(0, imageEndIndex);
+
+            Db db = new Db();
+            Connection conn=db.connectToDb("postgres", "postgres", "");
+            //content="Username: "+username+" Name: "+name+" bio: "+bio+" Image: "+image;
+            content=db.editUserData(conn, username, name, bio, image);
+        }
+        else {
+            content = "ERROR: the username in the path : "+usernamePath+" does not match with the username in the header: "+username;
+        }
+        return  content;
+    }
+    /*public String editUserData(Request request) {
+        String username = getUserName(request);
+        String usernamePath = request.getPathname().substring("/users/".length());
+        String content;
+        if (username.equals(usernamePath)) {
+            String body = request.getBody();
+            // Get the start and end index of the name
+            int nameStartIndex = body.indexOf("\"Name\": \"") + "\"Name\": \"".length();
+            int nameEndIndex = body.indexOf("\",  \"Bio\"");
+            // Extract the name from the string
+            String name = body.substring(nameStartIndex, nameEndIndex);
+
+            // Get the start and end index of the bio
+            int bioStartIndex = body.indexOf("\"Bio\": \"") + "\"Bio\": \"".length();
+            int bioEndIndex = body.indexOf("\", \"Image\"");
+            // Extract the bio from the string
+            String bio = body.substring(bioStartIndex, bioEndIndex);
+
+            // Get the start and end index of the image
+            int imageStartIndex = body.indexOf("\"Image\": \"") + "\"Image\": \"".length();
+            int imageEndIndex = body.indexOf("\"}");
+            // Extract the image from the string
+            String image = body.substring(imageStartIndex, imageEndIndex);
+
+            Db db = new Db();
+            Connection conn=db.connectToDb("postgres", "postgres", "");
+            //content="Username: "+username+" Name: "+name+" bio: "+bio+" Image: "+image;
+            content=db.editUserData(conn, username, name, bio, image);
+        }
+        else {
+            content = "ERROR: the username in the path : "+usernamePath+" does not match with the username in the header: "+username;
+        }
+        return  content;
+    }*/
 }

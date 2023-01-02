@@ -16,12 +16,12 @@ public class Db {
         }
         try {
             conn= DriverManager.getConnection("jdbc:postgresql://localhost:5432/"+dbname, user, pass);
-            if(conn!=null){
+            /*if(conn!=null){
                 System.out.println("Connection Established");
             }
             else{
                 System.out.println("Connection failed");
-            }
+            }*/
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -38,9 +38,8 @@ public class Db {
             stmt.setInt(3, 20);
             stmt.executeUpdate();
             result="The new Username: "+username+" was created successfully.";
-            System.out.println(result);
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
             result=e.getMessage();
         }
         return result;
@@ -61,7 +60,7 @@ public class Db {
                 result="ERROR: Login credentials are incorrect.";
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
             result=e.getMessage();
         }
         return result;
@@ -80,7 +79,7 @@ public class Db {
             stmt.executeUpdate();
             result="The new Card with the id: "+card.getId()+"  was created successfully.";
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
             result=e.getMessage();
         }
         return result;
@@ -103,7 +102,7 @@ public class Db {
                 result="ERROR: The package should have 5 Cards";
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
             result=e.getMessage();
         }
         return result;
@@ -121,7 +120,7 @@ public class Db {
             }
         }
         catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
 
         return coins;
@@ -138,7 +137,7 @@ public class Db {
             }
         }
         catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
         return tableIsEmpty;
     }
@@ -190,7 +189,7 @@ public class Db {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
             result=e.getMessage();
         }
 
@@ -213,7 +212,7 @@ public class Db {
                 stack.add(card);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
         return stack;
     }
@@ -251,7 +250,7 @@ public class Db {
                 return card;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
         return null;
     }
@@ -273,9 +272,8 @@ public class Db {
                     deck.add(card);
                 }
             }
-            System.out.println(deck.size());
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
         return deck;
     }
@@ -319,7 +317,7 @@ public class Db {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            ////e.printStackTrace();
         }
         return result;
     }
@@ -395,7 +393,45 @@ public class Db {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+            result=e.getMessage();
+        }
+
+        return result;
+    }
+    public String showUserData(Connection conn, String username){
+        String result="";
+        try {
+            String query = "SELECT name, bio, image FROM users WHERE username = ?";
+            PreparedStatement statement = conn.prepareStatement(query);
+            statement.setString(1, username);
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                String name = resultSet.getString("name");
+                String bio = resultSet.getString("bio");
+                String image = resultSet.getString("image");
+                result="Name: "+name+" | bio: "+bio+" | image: "+image;
+            }
+        } catch (Exception e) {
+            //e.printStackTrace();
+            result=e.getMessage();
+        }
+        return result;
+    }
+    public String editUserData(Connection conn, String username, String name, String bio, String image){
+        String result="";
+        try {
+            String query = "UPDATE users SET name=?, bio=?, image=? WHERE username=?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, name);
+            stmt.setString(2, bio);
+            stmt.setString(3, image);
+            stmt.setString(4, username);
+            stmt.executeUpdate();
+            result= username+"'s data has been successfully edited.";
+
+        } catch (Exception e) {
+            //e.printStackTrace();
             result=e.getMessage();
         }
 
