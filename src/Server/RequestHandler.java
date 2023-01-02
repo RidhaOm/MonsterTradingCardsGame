@@ -338,38 +338,4 @@ public class RequestHandler implements  Runnable{
         }
         return  content;
     }
-    /*public String editUserData(Request request) {
-        String username = getUserName(request);
-        String usernamePath = request.getPathname().substring("/users/".length());
-        String content;
-        if (username.equals(usernamePath)) {
-            String body = request.getBody();
-            // Get the start and end index of the name
-            int nameStartIndex = body.indexOf("\"Name\": \"") + "\"Name\": \"".length();
-            int nameEndIndex = body.indexOf("\",  \"Bio\"");
-            // Extract the name from the string
-            String name = body.substring(nameStartIndex, nameEndIndex);
-
-            // Get the start and end index of the bio
-            int bioStartIndex = body.indexOf("\"Bio\": \"") + "\"Bio\": \"".length();
-            int bioEndIndex = body.indexOf("\", \"Image\"");
-            // Extract the bio from the string
-            String bio = body.substring(bioStartIndex, bioEndIndex);
-
-            // Get the start and end index of the image
-            int imageStartIndex = body.indexOf("\"Image\": \"") + "\"Image\": \"".length();
-            int imageEndIndex = body.indexOf("\"}");
-            // Extract the image from the string
-            String image = body.substring(imageStartIndex, imageEndIndex);
-
-            Db db = new Db();
-            Connection conn=db.connectToDb("postgres", "postgres", "");
-            //content="Username: "+username+" Name: "+name+" bio: "+bio+" Image: "+image;
-            content=db.editUserData(conn, username, name, bio, image);
-        }
-        else {
-            content = "ERROR: the username in the path : "+usernamePath+" does not match with the username in the header: "+username;
-        }
-        return  content;
-    }*/
 }
