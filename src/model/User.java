@@ -55,6 +55,10 @@ public class User {
         return deck;
     }
 
+    public void setDeck(Vector<Card> deck) {
+        this.deck = deck;
+    }
+
     public void initDeck(){
         for(int i=0; i<4;i++){
             String cardType;

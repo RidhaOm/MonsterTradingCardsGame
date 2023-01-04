@@ -130,7 +130,7 @@ public class Battle {
         return null;
     }
 
-    public void startBattle() {
+    public User startBattle() {
         System.out.println("\nBattle Starts: \n");
         for (int i=1;i<=100;i++) {
             //choose a random card from the deck for user1:
@@ -164,15 +164,18 @@ public class Battle {
             //End of the Battle
             if(user2.getDeck().size()==0) {
                 System.out.println("\n==============================  " +user1.getUsername()+ " Wins  ==============================");
-                break;
+                return user1;
             }
             if(user1.getDeck().size()==0) {
                 System.out.println("\n==============================  " +user2.getUsername()+ " Wins  ==============================");
+                return user2;
+            }
+            if ( (i==100) && (user1.getDeck().size()!=0) && (user2.getDeck().size()!=0) ){
+                System.out.println("\n==============================  Draw  ==============================");
                 break;
             }
-
         }
-
+        return null;
     }
 
 }
