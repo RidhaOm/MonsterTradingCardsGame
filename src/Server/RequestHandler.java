@@ -3,10 +3,12 @@ package Server;
 
 import database.Db;
 import model.Card;
+import model.ScoreboardEntry;
 
 import java.io.*;
 import java.net.Socket;
 import java.sql.Connection;
+import java.util.List;
 import java.util.Vector;
 
 public class RequestHandler implements Runnable {
@@ -74,23 +76,25 @@ public class RequestHandler implements Runnable {
         } else if ((path.startsWith("/users/")) && method == Method.PUT) {
             content = editUserData(request);
         } else if ((path.equals("/stats")) && method == Method.GET) {
-            content = "stats";
+            content = handleStats(request);
         } else if ((path.equals("/score")) && method == Method.GET) {
-            content = "scoreboard";
+            content = handleScoreBoard(request);
         } else if ((path.equals("/battles")) && method == Method.POST) {
             content = handleBattle(request);
         } else if ((path.equals("/tradings")) && method == Method.GET) {
-            content = "check trading deals";
+            content = handleCheckTradingDeals(request);
         } else if ((path.equals("/tradings")) && method == Method.POST) {
-            content = "create trading deal";
+        content = handleCreateTradingDeals(request);
+        } else if ((path.startsWith("/tradings")) && method == Method.POST) {
+            content = handleMakeTradingDeal(request);
         } else if ((path.startsWith("/tradings/")) && method == Method.DELETE) {
-            content = "delete trading deals";
+            content = handleDeleteTradingDeals(request);
         }
 
         return content;
     }
 
-    public String getUserName(Request request) {
+    public String getusername(Request request) {
         String authHeader = request.getHeaderMap().get("Authorization");
         String[] authParts = authHeader.split("-");
         String[] usernameParts = authParts[0].split(" ");
@@ -171,7 +175,7 @@ public class RequestHandler implements Runnable {
 
     public String handleCreatePackage(Request request) {
         String content;
-        String username = getUserName(request);
+        String username = getusername(request);
         if (username.equals("admin")) {
             Db db = new Db();
             Connection conn = db.connectToDb("postgres", "postgres", "");
@@ -230,7 +234,7 @@ public class RequestHandler implements Runnable {
     }
 
     public String handleAcquirePackage(Request request) {
-        String username = getUserName(request);
+        String username = getusername(request);
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
         String content = db.acquirePackage(conn, username);
@@ -238,7 +242,7 @@ public class RequestHandler implements Runnable {
     }
 
     public String handleShowStack(Request request) {
-        String username = getUserName(request);
+        String username = getusername(request);
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
         String content = db.showStack(conn, username);
@@ -246,7 +250,7 @@ public class RequestHandler implements Runnable {
     }
 
     public String handleShowDeck(Request request) {
-        String username = getUserName(request);
+        String username = getusername(request);
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
         String content = db.showDeck(conn, username);
@@ -266,7 +270,7 @@ public class RequestHandler implements Runnable {
             cardsId.add(cardId);
         }
         // Get the username:
-        String username = getUserName(request);
+        String username = getusername(request);
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
         String content = db.setDeck(conn, username, cardsId);
@@ -274,7 +278,7 @@ public class RequestHandler implements Runnable {
     }
 
     public String showUserData(Request request) {
-        String username = getUserName(request);
+        String username = getusername(request);
         String usernamePath = request.getPathname().substring("/users/".length());
         String content;
         if (username.equals(usernamePath)) {
@@ -288,7 +292,7 @@ public class RequestHandler implements Runnable {
     }
 
     public String editUserData(Request request) {
-        String username = getUserName(request);
+        String username = getusername(request);
         String usernamePath = request.getPathname().substring("/users/".length());
         String content;
         if (username.equals(usernamePath)) {
@@ -316,7 +320,6 @@ public class RequestHandler implements Runnable {
 
             Db db = new Db();
             Connection conn = db.connectToDb("postgres", "postgres", "");
-            //content="Username: "+username+" Name: "+name+" bio: "+bio+" Image: "+image;
             content = db.editUserData(conn, username, name, bio, image);
         } else {
             content = "ERROR: the username in the path : " + usernamePath + " does not match with the username in the header: " + username;
@@ -324,9 +327,28 @@ public class RequestHandler implements Runnable {
         return content;
     }
 
+    public String handleStats(Request request) {
+        String username = getusername(request);
+        Db db = new Db();
+        Connection conn = db.connectToDb("postgres", "postgres", "");
+        String content = db.getStats(conn, username);
+        return content;
+    }
+
+    public String handleScoreBoard(Request request) {
+        String content = "";
+        Db db = new Db();
+        Connection conn = db.connectToDb("postgres", "postgres", "");
+        List<ScoreboardEntry> scoreboard = db.getScoreboard(conn);
+        for (ScoreboardEntry entry : scoreboard) {
+            content += "\n" + entry.getUsername() + ": " + entry.getELO_value()  ;
+        }
+        return content;
+    }
+
     public String handleBattle(Request request) {
         // Get the username of the user making the request
-        String username = getUserName(request);
+        String username = getusername(request);
 
         // Connect to the database
         Db db = new Db();
@@ -356,4 +378,21 @@ public class RequestHandler implements Runnable {
         }
     }
 
+    public String handleCheckTradingDeals ( Request request) {
+
+        return "check trading deals";
+    }
+
+    public String handleCreateTradingDeals ( Request request) {
+        return "create trading deal";
+    }
+
+    public String handleDeleteTradingDeals ( Request request) {
+        return "Delete trading deals";
+    }
+
+    public String handleMakeTradingDeal ( Request request) {
+        String username=getusername(request);
+        return "Try to trade by the user: " + username;
+    }
 }

@@ -2,9 +2,12 @@ package database;
 
 import model.Battle;
 import model.Card;
+import model.ScoreboardEntry;
 import model.User;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 public class Db {
@@ -34,15 +37,30 @@ public class Db {
     public String createUser(Connection conn, String username, String password) {
         String result;
         try {
+            //Table users:
             String query = "insert into users (username, password, coins) values (?, ?, ?)";
             PreparedStatement stmt = conn.prepareStatement(query);
             stmt.setString(1, username);
             stmt.setString(2, password);
             stmt.setInt(3, 20);
             stmt.executeUpdate();
-            result = "The new Username: " + username + " was created successfully.";
+            //Table stats:
+            String statsQuery = "INSERT INTO stats (username, games_played, wins, ELO_value) values (?, ?, ?, ?)";
+            stmt = conn.prepareStatement(statsQuery);
+            stmt.setString(1, username);
+            stmt.setInt(2, 0);
+            stmt.setInt(3, 0);
+            stmt.setInt(4, 100);
+            stmt.executeUpdate();
+            //Table scoreboard
+            String scoreQuery = "INSERT INTO scoreboard (username, ELO_value) values (?, ?)";
+            stmt = conn.prepareStatement(scoreQuery);
+            stmt.setString(1, username);
+            stmt.setInt(2, 100);
+            stmt.executeUpdate();
+            result = "The new User \"" + username + "\" was created successfully.";
         } catch (Exception e) {
-            //e.printStackTrace();
+            e.printStackTrace();
             result = e.getMessage();
         }
         return result;
@@ -80,7 +98,6 @@ public class Db {
             stmt.setDouble(3, card.getDamage());
             stmt.setString(4, card.getElementType());
             stmt.setString(5, card.getCardType());
-
             stmt.executeUpdate();
             result = "The new Card with the id: " + card.getId() + "  was created successfully.";
         } catch (Exception e) {
@@ -541,6 +558,89 @@ public class Db {
         return false;
     }
 
+    public String getStats(Connection conn, String username) {
+        String result="";
+        try {
+            //Check the coins:
+            String query = "SELECT games_played, wins, ELO_value FROM stats WHERE username = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, username);
+            ResultSet resultSet = stmt.executeQuery();
+            if (resultSet.next()) {
+                int games_played = resultSet.getInt("games_played");
+                int wins = resultSet.getInt("wins");
+                int ELO_value = resultSet.getInt("ELO_value");
+                result="The stats of " + username + ": \n"
+                        + "Games played: " + games_played + "\n"
+                        + "wins: " + wins + "\n"
+                        + "ELO Value:  " + ELO_value + "\n";
+            }
+        } catch (Exception e) {
+            result=e.getMessage();
+        }
+
+        return result;
+    }
+
+    public void updateStats(Connection conn, String username, String opponentUsername, String winner) {
+        try {
+            if (winner.equals("Draw")) {
+                // Table stats
+                String statsQuery = "UPDATE stats SET games_played = games_played + 1 WHERE username = ? ";
+                PreparedStatement stmt = conn.prepareStatement(statsQuery);
+                stmt.setString(1, username);
+                stmt.executeUpdate();
+                stmt.setString(1, opponentUsername);
+                stmt.executeUpdate();
+            } else {
+                String loser;
+                if (winner.equals(username)) {
+                    loser = opponentUsername;
+                } else {
+                    loser = username;
+                }
+                // Table stats
+                String winnerStatsQuery = "UPDATE stats SET games_played = games_played + 1, wins = wins + 1, ELO_value = ELO_value + 3 WHERE username = ? ";
+                PreparedStatement stmt = conn.prepareStatement(winnerStatsQuery);
+                stmt.setString(1, winner);
+                stmt.executeUpdate();
+
+                String loserStatsQuery = "UPDATE stats SET games_played = games_played + 1, ELO_value = ELO_value - 5 WHERE username = ? ";
+                stmt = conn.prepareStatement(loserStatsQuery);
+                stmt.setString(1, loser);
+                stmt.executeUpdate();
+                //Table scoreboard
+                String winnerScoreQuery = "UPDATE scoreboard SET ELO_value = ELO_value + 3 WHERE username = ? ";
+                stmt = conn.prepareStatement(winnerScoreQuery);
+                stmt.setString(1, winner);
+                stmt.executeUpdate();
+
+                String loserScoreQuery = "UPDATE scoreboard SET ELO_value = ELO_value - 5 WHERE username = ? ";
+                stmt = conn.prepareStatement(loserScoreQuery);
+                stmt.setString(1, loser);
+                stmt.executeUpdate();
+            }
+
+        } catch (Exception e) {
+        }
+    }
+
+    public List<ScoreboardEntry> getScoreboard(Connection conn) {
+        List<ScoreboardEntry> scoreboard = new ArrayList<>();
+        String query = "SELECT username, ELO_value FROM scoreboard ORDER BY ELO_value DESC";
+        try (Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(query);
+            while (rs.next()) {
+                String username = rs.getString("username");
+                int ELO_value = rs.getInt("ELO_value");
+                scoreboard.add(new ScoreboardEntry(username, ELO_value));
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return scoreboard;
+    }
+
     public String startBattle(Connection conn, String username, String opponentUsername) {
         String result = "Battle between " + username + " and " + opponentUsername + "\n";
         try {
@@ -580,6 +680,14 @@ public class Db {
             }
             stmt.setInt(3, battleId);
             stmt.executeUpdate();
+            //update the stats in the tables stats and scoreboard:
+            if (winner==null){
+                updateStats(conn, username, opponentUsername, "Draw");
+            }
+            else {
+                updateStats(conn, username, opponentUsername, winner.getUsername());
+            }
+            result=battle.getBattleLog();
         } catch (Exception e) {
             //e.printStackTrace();
             result += e.getMessage();
