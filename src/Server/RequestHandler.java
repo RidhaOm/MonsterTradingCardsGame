@@ -84,7 +84,7 @@ public class RequestHandler implements Runnable {
         } else if ((path.equals("/tradings")) && method == Method.GET) {
             content = handleCheckTradingDeals(request);
         } else if ((path.equals("/tradings")) && method == Method.POST) {
-        content = handleCreateTradingDeals(request);
+            content = handleCreateTradingDeals(request);
         } else if ((path.startsWith("/tradings")) && method == Method.POST) {
             content = handleMakeTradingDeal(request);
         } else if ((path.startsWith("/tradings/")) && method == Method.DELETE) {
@@ -341,7 +341,7 @@ public class RequestHandler implements Runnable {
         Connection conn = db.connectToDb("postgres", "postgres", "");
         List<ScoreboardEntry> scoreboard = db.getScoreboard(conn);
         for (ScoreboardEntry entry : scoreboard) {
-            content += "\n" + entry.getUsername() + ": " + entry.getELO_value()  ;
+            content += "\n" + entry.getUsername() + ": " + entry.getELO_value();
         }
         return content;
     }
@@ -378,21 +378,51 @@ public class RequestHandler implements Runnable {
         }
     }
 
-    public String handleCheckTradingDeals ( Request request) {
-
-        return "check trading deals";
+    public String handleCheckTradingDeals(Request request) {
+        String username = getusername(request);
+        Db db = new Db();
+        Connection conn = db.connectToDb("postgres", "postgres", "");
+        String content=db.getTrades(conn, username);
+        return content;
     }
 
-    public String handleCreateTradingDeals ( Request request) {
-        return "create trading deal";
+    public String handleCreateTradingDeals(Request request) {
+        String username = getusername(request);
+        //Split the body:
+        String body = request.getBody();
+        String[] parts = body.split(",");
+        String id = parts[0].split(":")[1];
+        String cardToTrade = parts[1].split(":")[1];
+        String type = parts[2].split(":")[1];
+        String minimumDamage = parts[3].split(":")[1];
+        //Clean the  variables:
+        id = id.substring(2, id.length() - 1);
+        cardToTrade = cardToTrade.substring(2, cardToTrade.length() - 1);
+        type = type.substring(2, type.length() - 1);
+        minimumDamage = minimumDamage.substring(1, minimumDamage.length() - 1);
+        Db db = new Db();
+        Connection conn = db.connectToDb("postgres", "postgres", "");
+        String content = db.addTrade(conn, id, username, cardToTrade, type, minimumDamage);
+
+//        return "create trading deal. Body:\n"+id+"|"+cardToTrade+"|"+type+"|"+minimumDamage+"|";
+        return content;
     }
 
-    public String handleDeleteTradingDeals ( Request request) {
-        return "Delete trading deals";
+    public String handleDeleteTradingDeals(Request request) {
+        String id = request.getPathname().substring(10);
+        Db db = new Db();
+        Connection conn = db.connectToDb("postgres", "postgres", "");
+        String content=db.deleteTrade(conn, id);
+        return content;
     }
 
-    public String handleMakeTradingDeal ( Request request) {
-        String username=getusername(request);
-        return "Try to trade by the user: " + username;
+    public String handleMakeTradingDeal(Request request) {
+        String username = getusername(request);
+        String tradeId = request.getPathname().substring(10);
+        String cardToSellId = request.getBody().substring(1, request.getBody().length()-1);
+        Db db = new Db();
+        Connection conn = db.connectToDb("postgres", "postgres", "");
+        String content=db.trade(conn, username, tradeId, cardToSellId);
+        return content;
     }
 }

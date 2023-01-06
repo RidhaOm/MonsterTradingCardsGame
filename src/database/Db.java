@@ -696,5 +696,140 @@ public class Db {
         return result;
     }
 
+    public String getTrades(Connection conn, String username) {
+        String result="The trades for the user " + username + " are: \n";
+        try {
+            String query = "SELECT * FROM trades WHERE username = ?";
+            PreparedStatement statement = conn.prepareStatement(query);
+            statement.setString(1, username);
+            ResultSet resultSet = statement.executeQuery();
+            if (!resultSet.next()) {
+                return username + " doesn't have any current trading deal";
+            }
+            while (resultSet.next()) {
+                String cardId = resultSet.getString("offered_card");
+                String requested_card_type = resultSet.getString("requested_card_type");
+                String minDamage = resultSet.getString("requested_card_min_damage");
+                Card card = getCardById(conn, cardId);
+                String trade = username + " offers a " +card.getElementType()+card.getName() + " with a damage = " + card.getDamage() +
+                        " and requests a " + requested_card_type + " with a minimum damage of " + minDamage + "\n";
+                result += trade;
+            }
+        } catch (Exception e) {
+            result = e.getMessage();
+            //e.printStackTrace();
+        }
+        return result;
+    }
 
+    public String addTrade(Connection conn, String id, String username, String cardToTrade, String type, String minimumDamage){
+        int minDamage=Integer.parseInt(minimumDamage);
+        String result;
+        try {
+            //Table users:
+            String query = "insert into trades (id, username, offered_card, requested_card_type, requested_card_min_damage) values (?, ?, ?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, id);
+            stmt.setString(2, username);
+            stmt.setString(3, cardToTrade);
+            stmt.setString(4, type);
+            stmt.setInt(5, minDamage);
+            stmt.executeUpdate();
+
+            result = "The new trade was created successfully.";
+        } catch (Exception e) {
+            e.printStackTrace();
+            result = e.getMessage();
+        }
+        return result;
+    };
+
+    public String deleteTrade(Connection conn, String id) {
+        String result;
+        try {
+            PreparedStatement stmt = conn.prepareStatement("DELETE FROM trades WHERE id = ?");
+            stmt.setString(1, id);
+            stmt.executeUpdate();
+            result="Trade was deleted successfully";
+        } catch (SQLException e) {
+            result=e.getMessage();
+        }
+        return result;
+    }
+
+    public String swapOwners(Connection conn, String cardToBuyId, String cardToSellId) {
+        String result = "";
+        try {
+            String buyer="";
+            String seller="";
+            String query = "SELECT username FROM cards WHERE id = ?";
+            PreparedStatement statement = conn.prepareStatement(query);
+            //Check username of the seller:
+            statement.setString(1, cardToBuyId);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                seller=resultSet.getString("username");
+            }
+            //Check username of the buyer:
+            statement.setString(1, cardToSellId);
+            resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                buyer=resultSet.getString("username");
+            }
+            if(seller.equals(buyer)){
+                result = "ERROR: The user cannot trade with himself";
+            }
+            else {
+                //Swap owners:
+                String updateQuery = "UPDATE cards SET username = ? WHERE id = ? ";
+                PreparedStatement stmt = conn.prepareStatement(updateQuery);
+                stmt.setString(1, buyer);
+                stmt.setString(2, cardToBuyId);
+                stmt.executeUpdate();
+                stmt.setString(1, seller);
+                stmt.setString(2, cardToSellId);
+                stmt.executeUpdate();
+                result = "Trade was made successfully";
+            }
+
+
+        } catch (Exception e) {
+            ////e.printStackTrace();
+            result = e.getMessage();
+        }
+        return result;
+    }
+
+    public String trade(Connection conn, String username, String tradeId, String cardToSellId) {
+        String result="";
+        try {
+            String query = "SELECT * FROM trades WHERE id = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, tradeId);
+            ResultSet resultSet = stmt.executeQuery();
+            if (resultSet.next()) {
+                String cardToBuyId = resultSet.getString("offered_card");
+                String cardType = resultSet.getString("requested_card_type");
+                double minDamage = resultSet.getDouble("requested_card_min_damage");
+
+                Card cardToSell=getCardById(conn, cardToSellId);
+                if ( (cardType.equalsIgnoreCase(cardToSell.getCardType())) && (minDamage<=cardToSell.getDamage()) ) {
+                    result=swapOwners(conn, cardToBuyId, cardToSellId);
+                }
+                else {
+                    result = cardType + " VS " + cardToSell.getCardType() + "\n" +
+                            minDamage + " VS " + cardToSell.getDamage();
+                    //result = "ERROR: The requested characteristics dont match with the offered card";
+                }
+            }
+            else {
+                result="Not found";
+            }
+        } catch (Exception e) {
+            //e.printStackTrace();
+            result=e.getMessage();
+        }
+//        return username + " offers " + cardToSellId + " and want to buy " + cardToBuyId;
+        return result;
+    }
 }
