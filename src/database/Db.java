@@ -696,17 +696,16 @@ public class Db {
         return result;
     }
 
-    public String getTrades(Connection conn, String username) {
-        String result="The trades for the user " + username + " are: \n";
+    public String getCurrentTrades(Connection conn, String username) {
+        String result="The current trades for the user " + username + " are: \n";
         try {
+            boolean tradeFound = false;
             String query = "SELECT * FROM trades WHERE username = ?";
             PreparedStatement statement = conn.prepareStatement(query);
             statement.setString(1, username);
             ResultSet resultSet = statement.executeQuery();
-            if (!resultSet.next()) {
-                return username + " doesn't have any current trading deal";
-            }
             while (resultSet.next()) {
+                tradeFound = true;
                 String cardId = resultSet.getString("offered_card");
                 String requested_card_type = resultSet.getString("requested_card_type");
                 String minDamage = resultSet.getString("requested_card_min_damage");
@@ -714,6 +713,39 @@ public class Db {
                 String trade = username + " offers a " +card.getElementType()+card.getName() + " with a damage = " + card.getDamage() +
                         " and requests a " + requested_card_type + " with a minimum damage of " + minDamage + "\n";
                 result += trade;
+            }
+            if (!tradeFound) {
+                result = username + " doesn't have any current trading deal\n";
+            }
+        } catch (Exception e) {
+            result = e.getMessage();
+            //e.printStackTrace();
+        }
+        return result;
+    }
+
+    public String getCompletedTrades(Connection conn, String username) {
+        String result="The completed trades for the user " + username + " are: \n";
+        try {
+            boolean tradeFound = false;
+            String query = "SELECT * FROM completed_trades WHERE requesting_username = ? OR offering_username = ?";
+            PreparedStatement statement = conn.prepareStatement(query);
+            statement.setString(1, username);
+            statement.setString(2, username);
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                tradeFound = true;
+                String requesting_username = resultSet.getString("requesting_username");
+                String offering_username = resultSet.getString("offering_username");
+                String traded_card = resultSet.getString("traded_card");
+                String received_card = resultSet.getString("received_card");
+
+                String trade = requesting_username + " traded the card " + traded_card +
+                        " and received the card " + received_card + " from the user " + offering_username + "\n";
+                result += trade;
+            }
+            if (!tradeFound) {
+                result = username + " doesn't have any completed trading deal\n";
             }
         } catch (Exception e) {
             result = e.getMessage();
@@ -780,6 +812,8 @@ public class Db {
                 result = "ERROR: The user cannot trade with himself";
             }
             else {
+                //Save it as completed deal:
+                saveTrade(conn, seller, buyer, cardToBuyId, cardToSellId);
                 //Swap owners:
                 String updateQuery = "UPDATE cards SET username = ? WHERE id = ? ";
                 PreparedStatement stmt = conn.prepareStatement(updateQuery);
@@ -831,5 +865,19 @@ public class Db {
         }
 //        return username + " offers " + cardToSellId + " and want to buy " + cardToBuyId;
         return result;
+    }
+
+    public void saveTrade(Connection conn, String requestingUsername, String offeringUsername, String tradedCard, String receivedCard) {
+        try {
+            String query = "insert into completed_trades (requesting_username, offering_username, traded_card, received_card) values (?, ?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, requestingUsername);
+            stmt.setString(2, offeringUsername);
+            stmt.setString(3, tradedCard);
+            stmt.setString(4, receivedCard);
+            stmt.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

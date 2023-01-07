@@ -382,7 +382,9 @@ public class RequestHandler implements Runnable {
         String username = getusername(request);
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
-        String content=db.getTrades(conn, username);
+        String content="";
+        content += db.getCurrentTrades(conn, username);
+        content += db.getCompletedTrades(conn, username);
         return content;
     }
 
