@@ -88,6 +88,21 @@ public class Db {
         return result;
     }
 
+    public boolean checkLoggedIn(Connection conn, String token) {
+        try {
+            String query = "SELECT * FROM tokens WHERE token = ?";
+            PreparedStatement statement = conn.prepareStatement(query);
+            statement.setString(1, token);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return true;
+            }
+        }
+        catch (Exception e) {
+
+        }
+        return false;
+    }
     public String createCard(Connection conn, Card card) {
         String result;
         try {

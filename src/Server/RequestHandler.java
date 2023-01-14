@@ -174,11 +174,16 @@ public class RequestHandler implements Runnable {
     }
 
     public String handleCreatePackage(Request request) {
+        Db db = new Db();
+        Connection conn = db.connectToDb("postgres", "postgres", "");
         String content;
+        //Check if th user logged in:
+        String token = request.getHeaderMap().get("Authorization");
+        if (!db.checkLoggedIn(conn, token)) {
+            return "ERROR: Invalid Token! Please login first.";
+        }
         String username = getusername(request);
         if (username.equals("admin")) {
-            Db db = new Db();
-            Connection conn = db.connectToDb("postgres", "postgres", "");
             Card[] cards = new Card[5];
             String body = request.getBody();
             // Split the body into cards:
@@ -237,6 +242,11 @@ public class RequestHandler implements Runnable {
         String username = getusername(request);
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
+        //Check if th user logged in:
+        String token = request.getHeaderMap().get("Authorization");
+        if (!db.checkLoggedIn(conn, token)) {
+            return "ERROR: Invalid Token! Please login first.";
+        }
         String content = db.acquirePackage(conn, username);
         return content;
     }
@@ -245,6 +255,11 @@ public class RequestHandler implements Runnable {
         String username = getusername(request);
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
+        //Check if th user logged in:
+        String token = request.getHeaderMap().get("Authorization");
+        if (!db.checkLoggedIn(conn, token)) {
+            return "ERROR: Invalid Token! Please login first.";
+        }
         String content = db.showStack(conn, username);
         return content;
     }
@@ -253,6 +268,11 @@ public class RequestHandler implements Runnable {
         String username = getusername(request);
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
+        //Check if th user logged in:
+        String token = request.getHeaderMap().get("Authorization");
+        if (!db.checkLoggedIn(conn, token)) {
+            return "ERROR: Invalid Token! Please login first.";
+        }
         String content = db.showDeck(conn, username);
         return content;
     }
@@ -273,6 +293,11 @@ public class RequestHandler implements Runnable {
         String username = getusername(request);
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
+        //Check if th user logged in:
+        String token = request.getHeaderMap().get("Authorization");
+        if (!db.checkLoggedIn(conn, token)) {
+            return "ERROR: Invalid Token! Please login first.";
+        }
         String content = db.setDeck(conn, username, cardsId);
         return content;
     }
@@ -281,9 +306,14 @@ public class RequestHandler implements Runnable {
         String username = getusername(request);
         String usernamePath = request.getPathname().substring("/users/".length());
         String content;
+        Db db = new Db();
+        Connection conn = db.connectToDb("postgres", "postgres", "");
+        //Check if th user logged in:
+        String token = request.getHeaderMap().get("Authorization");
+        if (!db.checkLoggedIn(conn, token)) {
+            return "ERROR: Invalid Token! Please login first.";
+        }
         if (username.equals(usernamePath)) {
-            Db db = new Db();
-            Connection conn = db.connectToDb("postgres", "postgres", "");
             content = db.showUserData(conn, username);
         } else {
             content = "ERROR: the username in the path : " + usernamePath + " does not match with the username in the header: " + username;
@@ -295,6 +325,13 @@ public class RequestHandler implements Runnable {
         String username = getusername(request);
         String usernamePath = request.getPathname().substring("/users/".length());
         String content;
+        Db db = new Db();
+        Connection conn = db.connectToDb("postgres", "postgres", "");
+        //Check if th user logged in:
+        String token = request.getHeaderMap().get("Authorization");
+        if (!db.checkLoggedIn(conn, token)) {
+            return "ERROR: Invalid Token! Please login first.";
+        }
         if (username.equals(usernamePath)) {
             String body = request.getBody();
             // Get the start index of the name
@@ -318,8 +355,6 @@ public class RequestHandler implements Runnable {
             int imageEndIndex = body.indexOf("\"");
             String image = body.substring(0, imageEndIndex);
 
-            Db db = new Db();
-            Connection conn = db.connectToDb("postgres", "postgres", "");
             content = db.editUserData(conn, username, name, bio, image);
         } else {
             content = "ERROR: the username in the path : " + usernamePath + " does not match with the username in the header: " + username;
@@ -331,6 +366,11 @@ public class RequestHandler implements Runnable {
         String username = getusername(request);
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
+        //Check if th user logged in:
+        String token = request.getHeaderMap().get("Authorization");
+        if (!db.checkLoggedIn(conn, token)) {
+            return "ERROR: Invalid Token! Please login first.";
+        }
         String content = db.getStats(conn, username);
         return content;
     }
@@ -339,6 +379,11 @@ public class RequestHandler implements Runnable {
         String content = "";
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
+        //Check if th user logged in:
+        String token = request.getHeaderMap().get("Authorization");
+        if (!db.checkLoggedIn(conn, token)) {
+            return "ERROR: Invalid Token! Please login first.";
+        }
         List<ScoreboardEntry> scoreboard = db.getScoreboard(conn);
         for (ScoreboardEntry entry : scoreboard) {
             content += "\n" + entry.getUsername() + ": " + entry.getELO_value();
@@ -353,6 +398,11 @@ public class RequestHandler implements Runnable {
         // Connect to the database
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
+        //Check if th user logged in:
+        String token = request.getHeaderMap().get("Authorization");
+        if (!db.checkLoggedIn(conn, token)) {
+            return "ERROR: Invalid Token! Please login first.";
+        }
 
         // Check if the user has a pending battle
         if (db.hasPendingBattle(conn, username)) {
@@ -382,6 +432,11 @@ public class RequestHandler implements Runnable {
         String username = getusername(request);
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
+        //Check if th user logged in:
+        String token = request.getHeaderMap().get("Authorization");
+        if (!db.checkLoggedIn(conn, token)) {
+            return "ERROR: Invalid Token! Please login first.";
+        }
         String content="";
         content += db.getCurrentTrades(conn, username);
         content += db.getCompletedTrades(conn, username);
@@ -404,6 +459,11 @@ public class RequestHandler implements Runnable {
         minimumDamage = minimumDamage.substring(1, minimumDamage.length() - 1);
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
+        //Check if th user logged in:
+        String token = request.getHeaderMap().get("Authorization");
+        if (!db.checkLoggedIn(conn, token)) {
+            return "ERROR: Invalid Token! Please login first.";
+        }
         String content = db.addTrade(conn, id, username, cardToTrade, type, minimumDamage);
 
 //        return "create trading deal. Body:\n"+id+"|"+cardToTrade+"|"+type+"|"+minimumDamage+"|";
@@ -414,6 +474,11 @@ public class RequestHandler implements Runnable {
         String id = request.getPathname().substring(10);
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
+        //Check if th user logged in:
+        String token = request.getHeaderMap().get("Authorization");
+        if (!db.checkLoggedIn(conn, token)) {
+            return "ERROR: Invalid Token! Please login first.";
+        }
         String content=db.deleteTrade(conn, id);
         return content;
     }
@@ -424,6 +489,11 @@ public class RequestHandler implements Runnable {
         String cardToSellId = request.getBody().substring(1, request.getBody().length()-1);
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
+        //Check if th user logged in:
+        String token = request.getHeaderMap().get("Authorization");
+        if (!db.checkLoggedIn(conn, token)) {
+            return "ERROR: Invalid Token! Please login first.";
+        }
         String content=db.trade(conn, username, tradeId, cardToSellId);
         return content;
     }
