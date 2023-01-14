@@ -324,7 +324,6 @@ public class RequestHandler implements Runnable {
     public String editUserData(Request request) {
         String username = getusername(request);
         String usernamePath = request.getPathname().substring("/users/".length());
-        String content;
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
         //Check if th user logged in:
@@ -332,6 +331,7 @@ public class RequestHandler implements Runnable {
         if (!db.checkLoggedIn(conn, token)) {
             return "ERROR: Invalid Token! Please login first.";
         }
+        String content;
         if (username.equals(usernamePath)) {
             String body = request.getBody();
             // Get the start index of the name
@@ -437,7 +437,7 @@ public class RequestHandler implements Runnable {
         if (!db.checkLoggedIn(conn, token)) {
             return "ERROR: Invalid Token! Please login first.";
         }
-        String content="";
+        String content = "";
         content += db.getCurrentTrades(conn, username);
         content += db.getCompletedTrades(conn, username);
         return content;
@@ -479,14 +479,14 @@ public class RequestHandler implements Runnable {
         if (!db.checkLoggedIn(conn, token)) {
             return "ERROR: Invalid Token! Please login first.";
         }
-        String content=db.deleteTrade(conn, id);
+        String content = db.deleteTrade(conn, id);
         return content;
     }
 
     public String handleMakeTradingDeal(Request request) {
         String username = getusername(request);
         String tradeId = request.getPathname().substring(10);
-        String cardToSellId = request.getBody().substring(1, request.getBody().length()-1);
+        String cardToSellId = request.getBody().substring(1, request.getBody().length() - 1);
         Db db = new Db();
         Connection conn = db.connectToDb("postgres", "postgres", "");
         //Check if th user logged in:
@@ -494,7 +494,7 @@ public class RequestHandler implements Runnable {
         if (!db.checkLoggedIn(conn, token)) {
             return "ERROR: Invalid Token! Please login first.";
         }
-        String content=db.trade(conn, username, tradeId, cardToSellId);
+        String content = db.trade(conn, username, tradeId, cardToSellId);
         return content;
     }
 }

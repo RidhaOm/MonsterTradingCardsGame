@@ -103,6 +103,7 @@ public class Db {
         }
         return false;
     }
+
     public String createCard(Connection conn, Card card) {
         String result;
         try {
@@ -361,42 +362,33 @@ public class Db {
         return result;
     }
 
-    /*public String setDeck(Connection conn, String username, Vector<String> cardsId ){
-        String result;
+    public boolean checkDecksCardsInTrade(Connection conn, Vector<String> cardsId) {
+        boolean result = false;
         try {
-            if (cardsId.size()!=4){
-                result= "ERROR: The Deck should contain exactly 4 Cards.\n";
+            for (String cardId : cardsId) {
+                String query = "SELECT * FROM trades WHERE offered_card = ?";
+                PreparedStatement statement = conn.prepareStatement(query);
+                statement.setString(1, cardId);
+                ResultSet resultSet = statement.executeQuery();
+                if (resultSet.next()) {
+                    return true;
+                }
             }
-            else if (checkDecksOwner(conn, username, cardsId)==false) {
-                result = "ERROR: Some cards in the deck do not belong to this user.";
-            }
-            else {
-                String query = "INSERT INTO decks (username, card_1_id, card_2_id, card_3_id, card_4_id) values (?, ?, ?, ?, ?)";
-                PreparedStatement stmt = conn.prepareStatement(query);
-                stmt.setString(1, username);
-                stmt.setString(2, cardsId.get(0));
-                stmt.setString(3, cardsId.get(1));
-                stmt.setString(4, cardsId.get(2));
-                stmt.setString(5, cardsId.get(3));
-                stmt.executeUpdate();
-
-                result= username+"'s deck has been successfully configured.";
-            }
-
         } catch (Exception e) {
-            e.printStackTrace();
-            result=e.getMessage();
+            ////e.printStackTrace();
         }
-
         return result;
-    }*/
+    }
+
     public String setDeck(Connection conn, String username, Vector<String> cardsId) {
         String result = "";
         try {
             if (cardsId.size() != 4) {
                 result = "ERROR: The Deck should contain exactly 4 Cards.\n";
             } else if (checkDecksOwner(conn, username, cardsId) == false) {
-                result = "ERROR: Some cards in the deck do not belong to this user.";
+                result = "ERROR: Some cards in the deck do not belong to this user.\n";
+            } else if (checkDecksCardsInTrade(conn, cardsId)) {
+                result = "ERROR: Some cards in the deck are currently unavailable for battle as they have been offered in trade.\n";
             } else {
                 //Check if a deck with username already exists:
                 String selectQuery = "SELECT EXISTS (SELECT 1 FROM decks WHERE username=?)";
