@@ -1,5 +1,10 @@
 package model;
 
+import database.Db;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class Battle {
@@ -14,7 +19,11 @@ public class Battle {
         this.user2=user2;
     }
 
-    public Battle(){}
+    Connection connectToDb() {
+        Db db = new Db();
+        Connection conn = db.connectToDb("postgres", "postgres", "");
+        return conn;
+    }
 
     public String getBattleLog() {
         return battleLog;
@@ -24,6 +33,20 @@ public class Battle {
         this.battleLog = battleLog;
     }
 
+    public void setCardOwner(Card card, User user) {
+        try{
+            Connection conn=connectToDb();
+            String id = card.getId();
+            String updateQuery = "UPDATE cards SET username = ? WHERE id = ? ";
+            PreparedStatement stmt = conn.prepareStatement(updateQuery);
+            stmt.setString(1, user.getUsername());
+            stmt.setString(2, id);
+            stmt.executeUpdate();
+        } catch (Exception e) {
+        //e.printStackTrace();
+        }
+
+    }
     public Card pureMonsterFight(Card card1, Card card2) {
         if( (card1.getCardType()=="Monster")&&(card2.getCardType()=="Monster") ){
             //Goblins vs Dragons ==> Dragons win
@@ -186,12 +209,14 @@ public class Battle {
                 winner=spellMixedFight(card1, card2);
             }
 
-            //Remove the card that lose
+            //Remove the card that lose and change his owner
             if (winner==card1){
                 user2.getDeck().remove(indexCard2);
+                setCardOwner(card2, user1);
             }
             else if (winner==card2){
                 user1.getDeck().remove(indexCard1);
+                setCardOwner(card1, user2);
             }
             //End of the Battle
             if(user2.getDeck().size()==0) {

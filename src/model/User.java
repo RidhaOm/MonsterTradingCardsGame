@@ -1,4 +1,6 @@
 package model;
+import database.Db;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,6 +18,12 @@ public class User {
     //Constructor:
     public User(String new_username) {
         this.username=new_username;
+    }
+
+    Connection connectToDb() {
+        Db db = new Db();
+        Connection conn = db.connectToDb("postgres", "postgres", "");
+        return conn;
     }
 
     //Getter and setter:
