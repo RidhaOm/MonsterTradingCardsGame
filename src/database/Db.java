@@ -70,8 +70,13 @@ public class Db {
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
                 // Login credentials are correct
-                result = username + " logged in successfully.";
-
+                String token = "Basic " + username + "-mtcgToken";
+                String tokenQuery = "insert into tokens (token, username) values (?, ?)";
+                PreparedStatement stmt = conn.prepareStatement(tokenQuery);
+                stmt.setString(1, token);
+                stmt.setString(2, username);
+                stmt.executeUpdate();
+                result = username + " logged in successfully.\nGeneratde Token: " + token;
             } else {
                 // Login credentials are incorrect
                 result = "ERROR: Login credentials are incorrect.";
