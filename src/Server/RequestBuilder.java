@@ -31,12 +31,12 @@ public class RequestBuilder {
         return request;
     }
 
-    private Method getMethod(String methodString)
+    public Method getMethod(String methodString)
     {
         return Method.valueOf(methodString.toUpperCase());
     }
 
-    private void setPathname(Request request, String path){
+    public void setPathname(Request request, String path){
         boolean hasParams = path.indexOf("?") != -1;
         if(hasParams)
         {
