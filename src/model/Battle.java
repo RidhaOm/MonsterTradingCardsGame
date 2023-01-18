@@ -47,7 +47,25 @@ public class Battle {
         }
 
     }
+
+    public void damageAmplification(Card card1, Card card2) {
+        if( (card1.getDamage()>=2 * card2.getDamage()) ) {
+            card1.setDamage(card1.getDamage() + 5);
+            battleLog+="Damage of the " + user1.getUsername() + "'s card is at least twice the " +user2.getUsername() + "'s card.\n" +
+                    "=> The \"Damage Amplification\" feature is activated => +5 damage => New damage: " + card1.getDamage() + "\n";
+        }
+        if( (card2.getDamage()>=2 * card1.getDamage()) ) {
+            card2.setDamage(card2.getDamage() + 5);
+            battleLog+="Damage of the " + user2.getUsername() + "'s card is at least twice the " +user1.getUsername() + "'s card.\n" +
+                    "=> The \"Damage Amplification\" feature is activated => +5 damage => New damage: " + card2.getDamage() + "\n";
+        }
+    }
     public Card pureMonsterFight(Card card1, Card card2) {
+        //Mandatory Feature: Damage Amplification:
+        if( (card1.getDamage()>=2 * card2.getDamage()) || (card2.getDamage()>=2 * card1.getDamage())) {
+            damageAmplification(card1, card2);
+        }
+
         if( (card1.getCardType()=="Monster")&&(card2.getCardType()=="Monster") ){
             //Goblins vs Dragons ==> Dragons win
             if( (card1.getName()=="Goblin")&&(card2.getName()=="Dragon") ){
@@ -111,15 +129,8 @@ public class Battle {
 
     public Card spellMixedFight(Card card1, Card card2){
         //Mandatory Feature: Damage Amplification:
-        if( (card1.getDamage()>=2 * card2.getDamage()) ) {
-            card1.setDamage(card1.getDamage() + 5);
-            battleLog+="Damage of the " + user1.getUsername() + "'s card is at least twice the " +user2.getUsername() + "'s card.\n" +
-                    "=> The \"Damage Amplification\" feature is activated => +5 damage => New damage: " + card1.getDamage() + "\n";
-        }
-        if( (card2.getDamage()>=2 * card1.getDamage()) ) {
-            card2.setDamage(card2.getDamage() + 5);
-            battleLog+="Damage of the " + user2.getUsername() + "'s card is at least twice the " +user1.getUsername() + "'s card.\n" +
-                    "=> The \"Damage Amplification\" feature is activated => +5 damage => New damage: " + card2.getDamage() + "\n";
+        if( (card1.getDamage()>=2 * card2.getDamage()) || (card2.getDamage()>=2 * card1.getDamage())) {
+            damageAmplification(card1, card2);
         }
         // Knights vs WaterSpells => WaterSpells win
         if( (card1.getName()=="Knight")&&(card2.getCardType()=="Spell")&&(card2.getElementType()=="Water") ){
