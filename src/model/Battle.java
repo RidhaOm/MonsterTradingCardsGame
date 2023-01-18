@@ -50,14 +50,14 @@ public class Battle {
 
     public void damageAmplification(Card card1, Card card2) {
         if( (card1.getDamage()>=2 * card2.getDamage()) ) {
-            card1.setDamage(card1.getDamage() + 5);
+            card1.setDamage(card1.getDamage() + 4);
             battleLog+="Damage of the " + user1.getUsername() + "'s card is at least twice the " +user2.getUsername() + "'s card.\n" +
-                    "=> The \"Damage Amplification\" feature is activated => +5 damage => New damage: " + card1.getDamage() + "\n";
+                    "=> The \"Damage Amplification\" feature is activated => +4 damage => New damage: " + card1.getDamage() + "\n";
         }
         if( (card2.getDamage()>=2 * card1.getDamage()) ) {
-            card2.setDamage(card2.getDamage() + 5);
+            card2.setDamage(card2.getDamage() + 4);
             battleLog+="Damage of the " + user2.getUsername() + "'s card is at least twice the " +user1.getUsername() + "'s card.\n" +
-                    "=> The \"Damage Amplification\" feature is activated => +5 damage => New damage: " + card2.getDamage() + "\n";
+                    "=> The \"Damage Amplification\" feature is activated => +4 damage => New damage: " + card2.getDamage() + "\n";
         }
     }
     public Card pureMonsterFight(Card card1, Card card2) {

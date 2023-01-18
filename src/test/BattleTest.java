@@ -108,12 +108,30 @@ class BattleTest {
         var card2=new Card("Monster", "Fire", "Knight", 65);
         assertEquals(null, battle.spellMixedFight(card1,card2));
 
-        card1=new Card("Spell", "Normal", "Spell", 20);
+        card1=new Card("Spell", "Normal", "Spell", 21);
         card2=new Card("Spell", "Water", "Spell", 80);
         assertEquals(null, battle.spellMixedFight(card1,card2));
 
-        card1=new Card("Monster", "Fire", "Elve", 15);
+        card1=new Card("Monster", "Fire", "Elve", 16);
         card2=new Card("Spell", "Normal", "Spell", 60);
         assertEquals(null, battle.spellMixedFight(card1,card2));
+    }
+
+    @Test
+    void damageAmplificationShouldAdd4Damage() {
+        var card1=new Card("Spell", "Fire", "Spell", 50);
+        var card2=new Card("Monster", "Fire", "Knight", 25);
+        assertEquals(card1, battle.spellMixedFight(card1,card2));
+        assertEquals(54, card1.getDamage());
+
+        card1=new Card("Spell", "Normal", "Spell", 20);
+        card2=new Card("Spell", "Water", "Spell", 70);
+        assertEquals(card1, battle.spellMixedFight(card1,card2));
+        assertEquals(74, card2.getDamage());
+
+        card1=new Card("Monster", "Fire", "Elve", 15);
+        card2=new Card("Spell", "Normal", "Spell", 60);
+        assertEquals(card2, battle.spellMixedFight(card1,card2));
+        assertEquals(64, card2.getDamage());
     }
 }
