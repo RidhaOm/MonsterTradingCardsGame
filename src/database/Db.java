@@ -527,28 +527,6 @@ public class Db {
         }
     }
 
-    public String getPendingOpponentUsername(Connection conn, String username) {
-        String query = "SELECT * FROM battles WHERE user1 = ? OR user2 = ? AND completed = false";
-        try (PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setString(1, username);
-            stmt.setString(2, username);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                // The user is in a pending battle, return the opponent's username
-                String opponentUsername;
-                if (rs.getString("user1").equals(username)) {
-                    opponentUsername = rs.getString("user2");
-                } else {
-                    opponentUsername = rs.getString("user1");
-                }
-                return opponentUsername;
-            }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-        return null;
-    }
-
     public boolean hasPendingBattle(Connection conn, String username) {
         String query = "SELECT * FROM battles WHERE user1 = ? OR user2 = ? AND completed = false";
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
